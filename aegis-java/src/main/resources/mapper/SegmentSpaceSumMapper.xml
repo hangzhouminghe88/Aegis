@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mingheinfo.maxdata.core.mapper.SegmentSpaceSumMapper">
+
+    <insert id="statSegmentSpace">
+		INSERT INTO segment_space_sum(service, OWNER, segment_name, partition_name, segment_type,
+                           used_space, diff_space, create_time, last_ddl_time, table_space_name)
+        SELECT a.service, a.owner, a.segment_name, a.partition_name, a.segment_type, a.used_space,
+               a.used_space - b.used_space AS diff_space,
+               CURDATE() AS gmt_create, a.last_ddl_time, a.table_space_name
+          FROM segment_space a LEFT JOIN segment_space b ON a.segment_name = b.segment_name
+           AND a.owner = b.owner AND a.segment_type = b.segment_type
+           AND a.service = b.service AND IFNULL(a.partition_name,'1') = IFNULL(b.partition_name,'1')
+           AND DATE_FORMAT(b.create_time,'%Y-%m-%d') = DATE_FORMAT(NOW() - INTERVAL 1 DAY, '%Y-%m-%d')
+         WHERE a.service=#{service}
+          AND DATE_FORMAT(a.create_time,'%Y-%m-%d') = DATE_FORMAT(NOW(), '%Y-%m-%d');
+    </insert>
+</mapper>

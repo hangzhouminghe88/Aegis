@@ -1,0 +1,44 @@
+orcl=
+  (DESCRIPTION =
+    (FAILOVER=ON)
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.10.130)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+     ( FAILOVER_MODE=
+      (TYPE=SELECT)
+     (METHOD=BASIC))
+    )
+  )
+
+maxdata1=
+  (DESCRIPTION =
+    (FAILOVER=ON)
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 199.120.75.111)(PORT = 1521))
+    ) 
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+     ( FAILOVER_MODE= 
+      (TYPE=SELECT)
+     (METHOD=BASIC))
+    )
+  ) 
+  
+maxdata2=
+  (DESCRIPTION =
+    (FAILOVER=ON)
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 199.120.75.112)(PORT = 1521))
+    ) 
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+     ( FAILOVER_MODE= 
+      (TYPE=SELECT)
+     (METHOD=BASIC))
+    )
+  ) 

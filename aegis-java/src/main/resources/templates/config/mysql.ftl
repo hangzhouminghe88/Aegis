@@ -1,0 +1,2 @@
+uid="${uid}"
+passwd="${passwd}"

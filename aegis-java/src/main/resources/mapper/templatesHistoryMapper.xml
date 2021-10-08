@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mingheinfo.maxdata.core.mapper.TemplatesHistoryMapper">
+    <resultMap id="curvesMap" type="java.util.HashMap">
+        <result property="time" column="time" javaType="java.lang.String"/>
+        <result property="currval" column="currval" javaType="java.lang.Float"/>
+        <result property="lastval" column="lastval" javaType="java.lang.Float"/>
+        <result property="lastld" column="lastld" javaType="java.lang.Float"/>
+        <result property="avgCurrVal" column="avgCurrVal" javaType="java.lang.Float"/>
+        <result property="avgLastVal" column="avgLastVal" javaType="java.lang.Float"/>
+        <result property="score" column="score" javaType="java.lang.Float"/>
+        <result property="type" column="type" javaType="java.lang.String"/>
+        <result property="service" column="service" javaType="java.lang.String"/>
+        <result property="sname" column="sname" javaType="java.lang.String"/>
+        <result property="times" column="times" javaType="java.lang.Integer"/>
+    </resultMap>
+
+    <select id="queryCurvesList" parameterType="java.util.HashMap" resultMap="curvesMap">
+      SELECT  t.currval, t.name, t.sname, t.gmt_modified as time, t.sname, t.times, t.score, t.service, t.lastval, t.last1d, t.type FROM
+      (
+       SELECT UNIX_TIMESTAMP(DATE_FORMAT(gmt_modified,#{stamp})) as gmt_modified, IFNULL(currval, 0) as currval, IFNULL(lastval,0) as lastval, IFNULL(last1d,0) as last1d, NAME, TYPE, service, sname, times, score, avg(currval) as avgCurval FROM templates_history
+        <where>
+            1 = 1
+            <if test="service != '' and service != null">
+                AND service = #{service}
+            </if>
+            <if test="name != '' and name != null">
+                AND name =#{name}
+            </if>
+            <if test="(endTime != ''  and endTime != null) and (startTime != '' and startTime != null)">
+                AND gmt_modified BETWEEN #{startTime} AND #{endTime}
+            </if>
+            <if test="tags != '' and tags != null">
+                AND  CONCAT(NAME, sname, TYPE, tags) like '%${tags}%'
+            </if>
+        </where>
+        GROUP BY  gmt_modified, superby
+        )  AS t  order by time asc
+    </select>
+
+
+    <select id="queryTrendList" parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Metrics">
+        SELECT 
+       unix_timestamp(t1.date)*1000 as time, 
+       IFNULL(t2.currval,0) as currval,
+	   IFNULL(t2.lastval,0) as lastval,
+	   IFNULL(t2.last1d,0) as last1d,
+	   IFNULL(t2.times,0) as times,
+	   IFNULL(t2.score,0) as score,
+	   '${sname}' as sname,
+	   '${name}' as name,
+	   '${service}' as service,
+	   '${metricType}' as type
+	   FROM
+      (
+         SELECT @s :=@s + 1 as `index`, 
+         <if test="type == 'minute'">
+             DATE_FORMAT(DATE_SUB(now(), INTERVAL @s minute),'%Y-%m-%d %H:%i') 
+         </if>
+         <if test="type == 'hour'">
+             DATE_FORMAT(DATE_SUB(now(), INTERVAL @s minute),'%Y-%m-%d %H:%i') 
+         </if>
+         <if test="type == 'day'">
+             DATE_FORMAT(DATE_SUB(now(), INTERVAL @s hour),'%Y-%m-%d %H:00') 
+         </if>
+          <if test="type == 'week' or type=='month'">
+            DATE_SUB(CURRENT_DATE, INTERVAL @s day)
+          </if>
+          <if test="type == 'year'">
+            DATE_SUB(CURRENT_DATE, INTERVAL @s month)
+          </if>
+          AS `date`
+         FROM mysql.help_topic,(SELECT @s := -1) temp
+         <where>
+           <if test="type == 'minute'">
+              @s &lt; 5
+           </if>
+           <if test="type == 'hour'">
+             @s &lt; 60
+           </if>
+           <if test="type == 'day'">
+             @s &lt;= 24 * 60
+           </if>
+           <if test="type == 'week'">
+              @s &lt; 7
+           </if>
+           <if test="type == 'year'">
+             @s &lt; 12
+           </if>
+           <if test="type == 'month'">
+             @s &lt;= 30
+           </if>
+         </where>
+         ORDER BY `date` DESC
+	  )as t1
+	   left join (  
+	      <if test="type == 'minute'">
+              select DATE_FORMAT(gmt_modified,'%Y-%m-%d %H:%i') as hours,
+           </if>
+           <if test="type == 'hour'">
+             select DATE_FORMAT(gmt_modified,'%Y-%m-%d %H:%i') as hours,
+           </if>
+           <if test="type == 'day'">
+              select DATE_FORMAT(gmt_modified,'%Y-%m-%d %H:00') as hours,
+           </if>
+           <if test="type == 'year' or type == 'month' or type == 'week'">
+             select DATE_FORMAT(gmt_modified,'%Y-%m-%d') as hours,
+           </if>
+            avg(currval) as currval, avg(last1d) as last1d, avg(lastval) as lastval, times, score 
+	  from templates_history 
+        <where>
+            1 = 1
+            <if test="sname != '' and sname != null">
+                AND sname = '${sname}'
+            </if>
+            <if test="service != '' and service != null">
+                AND service = '${service}'
+            </if>
+            <if test="name != '' and name != null">
+                AND name = '${name}'
+            </if>
+            <if test="tags != '' and tags != null">
+                AND  POSITION('${tags}' IN  CONCAT(sname, NAME, TYPE, tags))
+            </if>
+            <if test="type == 'day'">
+               AND DATE_SUB(now(),INTERVAL 1 day) &lt;= gmt_modified
+            </if>
+            <if test="type == 'minute'">
+               AND DATE_SUB(now(),INTERVAL 5 minute) &lt;= gmt_modified
+            </if>
+            <if test="type == 'hour'">
+               AND DATE_SUB(now(),INTERVAL 1 hour) &lt;= gmt_modified
+            </if>
+             <if test="type == 'week'">
+              AND DATE_SUB(CURRENT_DATE(),INTERVAL 1 week) &lt;= date(gmt_modified)
+            </if>
+            <if test="type == 'month'">
+              AND DATE_SUB(CURRENT_DATE(),INTERVAL 1 month) &lt;= date(gmt_modified)
+            </if>
+            <if test="type == 'year'">
+              AND DATE_SUB(CURRENT_DATE(),INTERVAL 1 year) &lt;= date(gmt_modified)
+            </if>
+            <if test="hostIds != '' and hostIds != null">
+                AND  host_id in (${hostIds})
+            </if>
+            AND superby= 1
+        </where>
+          group by hours
+          )
+	    as t2 
+	   on t1.date = t2.hours 
+	   GROUP BY t1.date;
+    </select>
+
+     <select id="queryTemplateName" parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Template">
+         SELECT NAME, sname, type FROM template
+         <where>
+             1 = 1
+             <if test="name != '' and name != null">
+                 AND name =#{name}
+             </if>
+             <if test="tags != '' and tags != null">
+                 AND CONCAT(NAME, sname, TYPE, tags) like CONCAT("%", #{tags}, "%")
+             </if>
+             <if test="type != '' and type != null">
+                 AND type =#{type}
+             </if>
+             AND type != 'SYSMSQL'
+         </where>
+        group by sname order by NAME ASC limit #{pageNumber}, #{size}
+     </select>
+
+    <select id="queryTemplateNameCount" parameterType="java.util.HashMap" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM
+        (SELECT NAME, sname FROM template
+        <where>
+            1 = 1
+            <if test="name != '' and name != null">
+                AND name =#{name}
+            </if>
+           <if test="tags != '' and tags != null">
+                AND CONCAT(NAME, sname, TYPE, tags) like CONCAT("%", #{tags}, "%")
+            </if>
+            <if test="type != '' and type != null">
+                AND type =#{type}
+            </if>
+            AND type != 'SYSMSQL'
+        </where>
+        group by sname
+        ) as t
+    </select>
+
+
+    <select id="queryTemplateNameToTrend" parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Template">
+        SELECT NAME, sname FROM templates_hosts
+        <where>
+            1 = 1
+            <if test="service != '' and service != null">
+                AND service = #{service}
+            </if>
+            <if test="name != '' and name != null">
+                AND name =#{name}
+            </if>
+            <if test="tags != '' and tags != null">
+                AND CONCAT(NAME, sname, TYPE, tags) like CONCAT("%", #{tags}, "%")
+            </if>
+            <if test="hostIds != '' and hostIds != null">
+                AND  host_id in (${hostIds})
+            </if>
+            AND super_by= 1
+        </where>
+        group by sname order by NAME asc limit #{pageNumber}, #{size}
+    </select>
+
+    <select id="queryTemplateNameToTrendCount" parameterType="java.util.HashMap" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM
+        (SELECT NAME, sname FROM templates_hosts
+        <where>
+            1 = 1
+            <if test="service != '' and service != null">
+                AND service = #{service}
+            </if>
+            <if test="name != '' and name != null">
+                AND name =#{name}
+            </if>
+            <if test="tags != '' and tags != null">
+                AND CONCAT(NAME, sname, TYPE, tags) like CONCAT("%", #{tags}, "%")
+            </if>
+            <if test="hostIds != '' and hostIds != null">
+                AND  host_id in (${hostIds})
+            </if>
+            AND super_by= 1
+        </where>
+        group by sname
+        ) as t
+    </select>
+
+    <select id="queryCurvesMetric" parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Metrics">
+       SELECT 
+       unix_timestamp(t1.date)*1000 as time, 
+       IFNULL(t2.currval,0) as currval,
+	   IFNULL(t2.lastval,0) as lastval,
+	   IFNULL(t2.last1d,0) as last1d,
+	   IFNULL(t2.times,0) as times,
+	   IFNULL(t2.score,0) as score,
+	   '${sname}' as sname,
+	   '${name}' as name,
+	   '${service}' as service,
+	   '${metricType}' as type
+	   FROM
+      (
+         SELECT @s :=@s + 1 as `index`, 
+         <if test="type == 'minute'">
+             DATE_FORMAT(DATE_SUB(now(), INTERVAL @s minute),'%Y-%m-%d %H:%i') 
+         </if>
+         <if test="type == 'hour'">
+             DATE_FORMAT(DATE_SUB(now(), INTERVAL @s minute),'%Y-%m-%d %H:%i') 
+         </if>
+         <if test="type == 'day'">
+             DATE_FORMAT(DATE_SUB(now(), INTERVAL @s hour),'%Y-%m-%d %H:00') 
+         </if>
+          AS `date`
+         FROM mysql.help_topic,(SELECT @s := -1) temp
+         <where>
+           <if test="type == 'minute'">
+              @s &lt;= 5
+           </if>
+           <if test="type == 'hour'">
+             @s &lt; 60
+           </if>
+           <if test="type == 'day'">
+             @s &lt; 24
+           </if>
+         </where>
+         ORDER BY `date` DESC
+	  )as t1
+	   left join (
+	       <if test="type == 'minute'">
+              select DATE_FORMAT(gmt_modified,'%Y-%m-%d %H:%i') as hours,
+           </if>
+           <if test="type == 'hour'">
+             select DATE_FORMAT(gmt_modified,'%Y-%m-%d %H:%i') as hours,
+           </if>
+           <if test="type == 'day'">
+              select DATE_FORMAT(gmt_modified,'%Y-%m-%d %H:00') as hours,
+           </if>
+	    avg(currval) as currval, avg(last1d) as last1d, avg(lastval) as lastval, times, score 
+	  from templates_history 
+        <where>
+            1 = 1
+            <if test="sname != '' and sname != null">
+                AND sname = '${sname}'
+            </if>
+            <if test="service != '' and service != null">
+                AND service = '${service}'
+            </if>
+            <if test="name != '' and name != null">
+                AND name = '${name}'
+            </if>
+            <if test="tags != '' and tags != null">
+                AND  POSITION('${tags}' IN  CONCAT(sname, NAME, TYPE, tags))
+            </if>
+            <if test="type == 'day'">
+               AND DATE_SUB(now(),INTERVAL 1 day) &lt;= gmt_modified
+            </if>
+            <if test="type == 'minute'">
+               AND DATE_SUB(now(),INTERVAL 5 minute) &lt;= gmt_modified
+            </if>
+            <if test="type == 'hour'">
+               AND DATE_SUB(now(),INTERVAL 1 hour) &lt;= gmt_modified
+            </if>
+        </where>
+          group by hours
+          )
+	    as t2 
+	   on t1.date = t2.hours 
+	   GROUP BY t1.date;
+    </select>
+
+    <select id="queryTemplate" parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Template">
+      SELECT name, sname, type from template
+      <where>
+          1 = 1
+          <if test="name != null || name != ''">
+              AND name = #{name}
+          </if>
+          <if test="sname != null || sname != ''">
+              AND sname = #{sname}
+          </if>
+      </where>
+    </select>
+
+    <select id="queryServiceByName" parameterType="java.util.HashMap" resultType="String">
+        Select distinct(name) from host
+    </select>
+
+    <select id="queryTemplateAllName" parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Template">
+        SELECT NAME, sname FROM template
+        <where>
+            1 = 1
+            <if test="name != '' and name != null">
+                AND name =#{name}
+            </if>
+            <if test="tags != '' and tags != null">
+                AND CONCAT(NAME, sname, TYPE, tags) like CONCAT("%", #{tags}, "%")
+            </if>
+            AND type != 'SYSMSQL'
+        </where>
+        group by sname order by NAME ASC
+    </select>
+    
+    <select id="getGt1DayMetrics"  parameterType="java.util.HashMap" resultType="com.mingheinfo.maxdata.core.entity.Metrics">
+       SELECT 
+       unix_timestamp(t1.date)*1000 as time, 
+       IFNULL(t2.currval,0) as currval,
+	   IFNULL(t2.lastval,0) as lastval,
+	   IFNULL(t2.last1d,0) as last1d,
+	   IFNULL(t2.times,0) as times,
+	   IFNULL(t2.score,0) as score,
+	  '${sname}' as sname,
+	  '${name}' as name,
+	  '${service}' as service,
+	  '${metricType}' as type
+	   FROM
+      (
+         SELECT @s :=@s + 1 as `index`, 
+          <if test="type == 'week' or type=='month'">
+            DATE_SUB(CURRENT_DATE, INTERVAL @s day)
+          </if>
+          <if test="type == 'year'">
+            DATE_SUB(CURRENT_DATE, INTERVAL @s month)
+          </if>
+          AS `date`
+         FROM mysql.help_topic,(SELECT @s := -1) temp
+         <where>
+           <if test="type == 'week'">
+              @s &lt; 7
+           </if>
+           <if test="type == 'year'">
+             @s &lt; 12
+           </if>
+           <if test="type == 'month'">
+             @s &lt;= 30
+           </if>
+         </where>
+         ORDER BY `date` DESC
+	  )as t1
+	  LEFT JOIN (
+	  select DATE_FORMAT(gmt_modified,'%Y-%m-%d') as hours, avg(currval) as currval, avg(last1d) as last1d, avg(lastval) as lastval, times, score 
+	  from templates_history 
+	   <where>
+	       1 = 1
+            <if test="sname != '' and sname != null">
+                AND sname ='${sname}'
+            </if>
+            <if test="service != '' and service != null">
+                AND service = '${service}'
+            </if>
+            <if test="name != '' and name != null">
+                AND name ='${name}'
+            </if>
+            <if test="tags != '' and tags != null">
+                AND  POSITION('${tags}' IN  CONCAT(sname, NAME, TYPE, tags))
+            </if>
+            <if test="type == 'week'">
+              AND DATE_SUB(CURRENT_DATE(),INTERVAL 1 week) &lt;= date(gmt_modified)
+            </if>
+            <if test="type == 'month'">
+              AND DATE_SUB(CURRENT_DATE(),INTERVAL 1 month) &lt;= date(gmt_modified)
+            </if>
+            <if test="type == 'year'">
+              AND DATE_SUB(CURRENT_DATE(),INTERVAL 1 year) &lt;= date(gmt_modified)
+            </if>
+	  </where> 
+	     group by hours)
+	    as t2 
+	   on t1.date = t2.hours 
+	   GROUP BY t1.date;
+    </select>
+</mapper>

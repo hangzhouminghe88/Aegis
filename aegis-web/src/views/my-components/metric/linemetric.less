@@ -1,0 +1,63 @@
+.line-metric{
+	height: 100%;
+	position: relative;
+	&__content{
+    min-height: 30vh;
+	}
+	&__lengend{
+		padding: 5px 60px;
+		width: 100%;
+		&-item{
+			padding: 0px 0px;
+			&__label{
+				width:10px;
+				height:10px;
+				display: inline-block;
+				vertical-align: middle;
+				position: relative;
+			}
+			.checked{
+				opacity: 0.5;
+			}
+			&__value{
+				display: inline-block;
+	            width: 9rem;
+	            &_label{
+					display: inline-block;
+					width: 8rem;
+	            }
+			}
+		}
+	 }
+}
+
+.table-nodata{
+	width: 100%;
+	height: 30vh;
+	line-height: 30vh;
+	display: inline-block;
+}
+
+.tab-containner{
+	display: flex;
+	justify-content: right;
+	justify-content: flex-end;
+	flex-grow: 1;
+	border-radius: 3px;
+}
+.tab-item{
+	flex-direction: column;
+	padding: 10px 20px;
+}
+
+
+input[type="checkbox"] {
+	left: -9px;
+	width: 36px;
+	height: 24px;
+	display: inline-block;
+	vertical-align: middle;
+	position: absolute;
+	top: -3px;
+	opacity: 0;
+}

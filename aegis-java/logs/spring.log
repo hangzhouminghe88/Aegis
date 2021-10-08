@@ -1,0 +1,2 @@
+2021-03-12 09:33:03.722  INFO 37828 --- [restartedMain] com.mingheinfo.MaxDataApplication        : Starting MaxDataApplication on LUD8B2F8OELB1NH with PID 37828 (D:\master\aegis-01\aegis\target\classes started by Administrator in D:\master\aegis-01\aegis)
+2021-03-12 09:33:03.728  INFO 37828 --- [restartedMain] com.mingheinfo.MaxDataApplication        : No active profile set, falling back to default profiles: default

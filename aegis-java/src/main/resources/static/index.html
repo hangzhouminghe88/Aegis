@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=icon href=/logo.png><title></title><meta name=keywords content=""><meta name=description content=""><script></script><style>.page-loading-wrap {
+      padding: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .half-circle-spinner,
+    .half-circle-spinner * {
+      box-sizing: border-box;
+    }
+
+    .half-circle-spinner {
+      width: 35px;
+      height: 35px;
+      border-radius: 100%;
+      position: relative;
+    }
+
+    .half-circle-spinner .circle {
+      content: "";
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 100%;
+      border: calc(35px / 10) solid transparent;
+    }
+
+    .half-circle-spinner .circle.circle-1 {
+      border-top-color: #5cadff;
+      animation: half-circle-spinner-animation 1s infinite;
+    }
+
+    .half-circle-spinner .circle.circle-2 {
+      border-bottom-color: #5cadff;
+      animation: half-circle-spinner-animation 1s infinite alternate;
+    }
+
+    @keyframes half-circle-spinner-animation {
+      0% {
+        transform: rotate(0deg);
+
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }</style><!--[if IE]>
+  <style>
+    *, ::after, ::before{
+      box-sizing: content-box!important;
+    }
+  </style>
+  <![endif]--><link href=/css/chunk-077e5d9e.5b27dfff.css rel=prefetch><link href=/css/chunk-0c7aafdf.309c0661.css rel=prefetch><link href=/css/chunk-1e43f1c2.b9f17461.css rel=prefetch><link href=/css/chunk-1e9688f5.d9bccbd3.css rel=prefetch><link href=/css/chunk-468ba320.674e7437.css rel=prefetch><link href=/css/chunk-a23983c8.57e7742c.css rel=prefetch><link href=/css/chunk-f9493d9c.e617ccfa.css rel=prefetch><link href=/js/chunk-077e5d9e.cfa2965c.js rel=prefetch><link href=/js/chunk-0c7aafdf.36d8fa95.js rel=prefetch><link href=/js/chunk-1e43f1c2.ea679f99.js rel=prefetch><link href=/js/chunk-1e9688f5.ae0c2422.js rel=prefetch><link href=/js/chunk-468ba320.96d895d3.js rel=prefetch><link href=/js/chunk-a23983c8.d17260b1.js rel=prefetch><link href=/js/chunk-f9493d9c.2b10770d.js rel=prefetch><link href=/css/app.90e8d543.css rel=preload as=style><link href=/css/vendor.d64f6a5d.css rel=preload as=style><link href=/js/app.de9e6794.js rel=preload as=script><link href=/js/runtime.da4b0e94.js rel=preload as=script><link href=/js/vendor.fba3eb6d.js rel=preload as=script><link href=/css/vendor.d64f6a5d.css rel=stylesheet><link href=/css/app.90e8d543.css rel=stylesheet></head><body><noscript><strong>We're sorry but aegis-front doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id=app><div class=page-loading-wrap><div class=half-circle-spinner><div class="circle circle-1"></div><div class="circle circle-2"></div></div><h4 style=margin-top:20px;>正在加载资源...</h4></div></div><script src=/js/runtime.da4b0e94.js></script><script src=/js/vendor.fba3eb6d.js></script><script src=/js/app.de9e6794.js></script></body></html>

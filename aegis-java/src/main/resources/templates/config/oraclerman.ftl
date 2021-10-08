@@ -1,0 +1,2 @@
+orainstance=${oracleInstance}:
+rmancatalogpath=${rmanCatalogPath}
